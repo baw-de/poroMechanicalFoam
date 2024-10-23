@@ -1,0 +1,33 @@
+$(info $$s4fPath is [${s4fPath}])
+
+include $(s4fPath)/etc/wmake-options
+
+EXE_INC = \
+    -I$(s4fPath)/src/solids4FoamModels/lnInclude \
+    -I$(s4fPath)/src/blockCoupledSolids4FoamTools/lnInclude \
+    -I../../lnInclude \
+    -I../../materialModels/poroHydraulicModel/lnInclude \
+    $(VERSION_SPECIFIC_INC) \
+    -I$(s4fPath)/ThirdParty/eigen3 \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/meshTools/lnInclude \
+    -I$(LIB_SRC)/finiteArea/lnInclude \
+    -I$(LIB_SRC)/lagrangian/lnInclude \
+    -I$(LIB_SRC)/dynamicMesh/lnInclude \
+    -I$(LIB_SRC)/dynamicMesh/dynamicMesh/lnInclude \
+    -I$(LIB_SRC)/dynamicMesh/dynamicFvMesh/lnInclude \
+    -I$(LIB_SRC)/dynamicFvMesh/lnInclude \
+    -I$(LIB_SRC)/dynamicMesh/topoChangerFvMesh/lnInclude \
+    -I$(LIB_SRC)/sampling/lnInclude \
+    -I$(LIB_SRC)/postProcessing/foamCalcFunctions/lnInclude \
+    -I$(LIB_SRC)/postProcessing/functionObjects/forces/lnInclude \
+    -I../../../lnInclude
+
+EXE_LIBS = \
+    -L$(FOAM_MODULE_LIBBIN) \
+    -lblockCoupledSolids4FoamTools \
+    -lsolids4FoamModels \
+    -lporoHydraulicModels \
+    -lporoModels  \
+    -lmeshTools \
+    -lsampling 

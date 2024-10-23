@@ -1,0 +1,53 @@
+$(info $$s4fPath is [${s4fPath}])
+
+include $(s4fPath)/etc/wmake-options
+
+ifneq (,$(findstring -DFOAMEXTEND, $(VERSION_SPECIFIC_INC)))
+    VERSION_SPECIFIC_LIBS = \
+        -lincompressibleTransportModels -lincompressibleTurbulenceModel \
+        -lincompressibleRASModels -lincompressibleLESModels -llduSolvers \
+        -lbasicThermophysicalModels -lcompressibleTurbulenceModel \
+        -linterfaceProperties -lfiniteArea -loversetMesh -loversetDynamicFvMesh
+
+else ifneq (,$(findstring -DOPENFOAM_ORG, $(VERSION_SPECIFIC_INC)))
+    VERSION_SPECIFIC_LIBS = \
+        -lmomentumTransportModels -lincompressibleMomentumTransportModels \
+        -lcompressibleMomentumTransportModels -ltwoPhaseMixture \
+        -limmiscibleIncompressibleTwoPhaseMixture -lmeshTools \
+        -lfvMotionSolvers -lradiationModels -lfluidThermophysicalModels \
+        -ltwoPhaseChangeModels
+else
+    VERSION_SPECIFIC_LIBS = \
+        -lturbulenceModels -lincompressibleTurbulenceModels \
+        -ltwoPhaseMixture -limmiscibleIncompressibleTwoPhaseMixture \
+        -lfvMotionSolvers -lradiationModels -lfvOptions \
+        -lcompressibleTransportModels -lspecie -lfluidThermophysicalModels \
+        -lcompressibleTurbulenceModels -lsampling \
+        -lincompressibleTransportModels -linterfaceProperties -lwaveModels \
+        -lVoFphaseTurbulentTransportModels \
+        -lincompressibleInterPhaseTransportModels -ladjointOptimisation
+endif
+
+EXE_INC = \
+    -std=c++11 \
+    $(DISABLE_WARNING_FLAGS) \
+    $(VERSION_SPECIFIC_INC) \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/meshTools/lnInclude \
+    -I$(LIB_SRC)/dynamicFvMesh/lnInclude \
+    -I$(LIB_SRC)/sampling/lnInclude \
+    -I$(LIB_SRC)/ODE/lnInclude \
+    -I$(LIB_SRC)/fvOptions/lnInclude \
+    -ImaterialModels/poroHydraulicModel/lnInclude \
+    -I$(s4fPath)/ThirdParty/eigen3 \
+    -I$(s4fPath)/src/blockCoupledSolids4FoamTools/lnInclude \
+    -I$(s4fPath)/src/solids4FoamModels/lnInclude
+
+
+LIB_LIBS = \
+    -L$(FOAM_LIBBIN)/libODE.so \
+    -L$(FOAM_LIBBIN)/libfiniteVolume \
+    -L$(FOAM_LIBBIN)/libfvOptions \
+    -L$(FOAM_LIBBIN)/dynamicMesh \
+    -L$(FOAM_USER_LIBBIN)/libsolids4FoamModels.so \
+    -L$(FOAM_USER_LIBBIN)/libporoHydraulicModels.so

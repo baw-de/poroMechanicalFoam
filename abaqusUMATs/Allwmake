@@ -1,0 +1,24 @@
+#!/bin/bash
+cd "${0%/*}" || exit  # Run from this directory
+
+# Check gfortran is installed before compiling fortran sub-routines
+if ! command -v gfortran >/dev/null 2>&1
+then
+    echo
+    echo "'gfortran' command not found! Please install gfortran!"
+    echo "On Ubuntu, you can do this by running the following command:"
+    echo "    sudo apt-get install gfortran"
+    echo
+    exit 1
+fi
+
+
+# Compile fortran routines
+echo "Compiling MohrCoulombAbaqus.for and placing object in $FOAM_USER_LIBBIN"
+(cd abaqusUmatMohrCoulomb && gfortran -c MohrCoulombAbaqus.for -O3 -fPIC -ffixed-form -ffixed-line-length-none -o $FOAM_USER_LIBBIN/abaqusUmatMohrCoulomb.o)
+
+
+# Compile C++ wrapper class
+wmake libso
+
+

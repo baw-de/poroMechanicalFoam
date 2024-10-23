@@ -1,0 +1,7 @@
+#!/bin/bash
+cd ${0%/*} || exit 1    # run from this directory
+
+cd poroMechanicalFoam && wclean
+wmake
+cd ../initPoroMechanicalFoam && wclean
+wmake
