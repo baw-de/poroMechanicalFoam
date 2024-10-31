@@ -22,7 +22,7 @@ export s4fPath=/path/to/solids4foam
 ./Allwmake
 ```
 ## Usage
-[Link to documentation will be added here]
+[https://www.baw.de/content/files/forschung_entwicklung/documents/B3952.00.04.70001.pdf#[{%22num%22%3A31%2C%22gen%22%3A0}%2C{%22name%22%3A%22XYZ%22}%2C-233%2C842%2C0]]
 ## Contributing
 We welcome contributions to poroMechanicalFoam! If you'd like to contribute, please follow these steps:
 1. Fork the repository
