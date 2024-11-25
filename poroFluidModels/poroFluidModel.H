@@ -133,6 +133,8 @@ namespace Foam
             //- This function will check that the D field was read from disk
             virtual void pRGHisRequired();
 
+            void addDefaultCellZone();
+            
             //- Under-relaxation method
             //  It can be 'fixed', 'Aitken' or 'QuasiNewton'
             //const word relaxationMethod_;
@@ -198,12 +200,21 @@ namespace Foam
             }
 
             //- Return non-const mesh
+            dynamicFvMesh &mesh()
+            {
+                return                 
+                    sharedMesh_
+                    ?const_cast<dynamicFvMesh&>(runTime_.lookupObject<dynamicFvMesh>("solid"))
+                    :static_cast<dynamicFvMesh&>(*this);
+            }
+
+            //- Return const mesh
             const dynamicFvMesh &mesh() const
             {
                 return                 
                     sharedMesh_
                     ?runTime_.lookupObject<dynamicFvMesh>("solid")
-                    :dynamic_cast<const dynamicFvMesh&>(*this);
+                    :static_cast<const dynamicFvMesh&>(*this);
             }
 
             //- Return time
