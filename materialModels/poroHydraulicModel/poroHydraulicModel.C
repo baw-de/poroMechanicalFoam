@@ -61,8 +61,8 @@ poroHydraulicModel::poroHydraulicModel
         )
     ),
     pField_(pField),
-    storageLawPtr_(pField.mesh().cellZones().size()),
-    conductivityModelPtr_(pField.mesh().cellZones().size()),
+    storageLawPtr_(max(pField.mesh().cellZones().size(),1)),
+    conductivityModelPtr_(max(pField.mesh().cellZones().size(),1)),
     rho_
     (
         poroHydraulicProperties_.lookupOrAddDefault<dimensionedScalar>
@@ -122,46 +122,7 @@ poroHydraulicModel::poroHydraulicModel
     Info << "Creating the poroHydraulicModel" << nl
          << "Gravity direction: " << vector(gamma_.value()).normalise() << nl
          << "Water specific weight: " << magGamma() << nl
-	 << "Referential Watertable is at z = " << href_ << endl;
-    
-    if (pField.mesh.cellZones().size() == 0)
-    {
-	Info<< "No cellZones found. Creating new cellZone containing all cells." << endl;
-	
-	// Empty lists for point and face zones (we don't modify these)
-	List<pointZone*> pointZones(0);
-	List<faceZone*> faceZones(0);
-	
-	// Create list of cell zones
-	List<cellZone*> cellZones(1);
-	
-	// Create addressing for all cells
-	labelList zoneAddressing(mesh.nCells());
-	forAll(zoneAddressing, cellI)
-	{
-	    zoneAddressing[cellI] = cellI;
-	}
-	
-	// Create the new zone
-	cellZones[0] = new cellZone
-	(
-	    "defaultZone",          // name
-	    zoneAddressing,      // addressing
-	    0,                   // index
-	    mesh.cellZones()     // cell zone mesh
-	);
-
-	// Add all zones to mesh
-	mesh.addZones
-	(
-	    pointZones,  // empty point zones
-	    faceZones,  // empty face zones
-	    cellZones   // our new cell zone
-	);
-	
-	Info<< "Created cellZone 'defaultZone' containing " 
-	    << mesh.nCells() << " cells" << endl;
-    }
+	     << "Referential Watertable is at z = " << href_ << endl;
 
     forAll(pField.mesh().cellZones(),zoneI)
     {
