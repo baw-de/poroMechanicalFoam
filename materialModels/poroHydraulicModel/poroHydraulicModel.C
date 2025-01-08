@@ -61,8 +61,8 @@ poroHydraulicModel::poroHydraulicModel
         )
     ),
     pField_(pField),
-    storageLawPtr_(pField.mesh().cellZones().size()),
-    conductivityModelPtr_(pField.mesh().cellZones().size()),
+    storageLawPtr_(max(pField.mesh().cellZones().size(),1)),
+    conductivityModelPtr_(max(pField.mesh().cellZones().size(),1)),
     rho_
     (
         poroHydraulicProperties_.lookupOrAddDefault<dimensionedScalar>
@@ -122,7 +122,7 @@ poroHydraulicModel::poroHydraulicModel
     Info << "Creating the poroHydraulicModel" << nl
          << "Gravity direction: " << vector(gamma_.value()).normalise() << nl
          << "Water specific weight: " << magGamma() << nl
-	 << "Referential Watertable is at z = " << href_ << endl;
+	     << "Referential Watertable is at z = " << href_ << endl;
 
     forAll(pField.mesh().cellZones(),zoneI)
     {

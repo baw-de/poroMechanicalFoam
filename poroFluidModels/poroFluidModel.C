@@ -58,6 +58,45 @@ void poroFluidModel::makeIterCtrl()
     );
 }
 
+void poroFluidModel::addDefaultCellZone()
+{
+        Info<< "No cellZones found. Creating new cellZone containing all cells." << endl;
+        
+        // Empty lists for point and face zones (we don't modify these)
+        List<pointZone*> pointZones(0);
+        List<faceZone*> faceZones(0);
+        
+        // Create list of cell zones
+        List<cellZone*> cellZones(1);
+        
+        // Create addressing for all cells
+        labelList zoneAddressing(mesh().nCells());
+        forAll(zoneAddressing, cellI)
+        {
+            zoneAddressing[cellI] = cellI;
+        }
+        
+        // Create the new zone
+        cellZones[0] = new cellZone
+        (
+            "defaultZone",          // name
+            zoneAddressing,      // addressing
+            0,                   // index
+            mesh().cellZones()     // cell zone mesh
+        );
+
+        // Add all zones to mesh
+        mesh().addZones
+        (
+            pointZones,  // empty point zones
+            faceZones,  // empty face zones
+            cellZones   // our new cell zone
+        );
+        
+        Info<< "Created cellZone 'defaultZone' containing " 
+            << mesh().nCells() << " cells" << endl;
+}
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 poroFluidModel::poroFluidModel
@@ -77,11 +116,11 @@ poroFluidModel::poroFluidModel
             bool(region == dynamicFvMesh::defaultRegion)
                 ? fileName(runTime.caseConstant())
                 : sharedMesh
-                    ? fileName(runTime.caseConstant() / region)
-                    : fileName(runTime.caseConstant() / "solid"),
+                    ? fileName(runTime.caseConstant() / "solid")
+                    : fileName(runTime.caseConstant() / region ),
             runTime, IOobject::MUST_READ, IOobject::NO_WRITE
         )
-       ),
+      ),
       name_(type),
       sharedMesh_(sharedMesh), // Is 'no' by default but can be set
                                // to yes for coupled calculations
@@ -242,6 +281,10 @@ poroFluidModel::poroFluidModel
         }
     }
 
+    if (this->cellZones().size() == 0)
+    {
+        addDefaultCellZone();
+    }
 
     Info << "poroFluidModel: " << type << nl
          << "with solution field: " << fieldName_ << nl
