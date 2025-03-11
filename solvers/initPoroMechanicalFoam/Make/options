@@ -2,6 +2,13 @@ $(info $$s4fPath is [${s4fPath}])
 
 include $(s4fPath)/etc/wmake-options
 
+ifdef S4F_USE_GFORTRAN
+    GFORTRAN_LIBS = \
+        -lgfortran \
+        $(FOAM_USER_LIBBIN)/abaqusUmatMohrCoulomb.o \
+        -labaqusUmatMohrCoulomb
+endif
+
 EXE_INC = \
     -I$(s4fPath)/src/solids4FoamModels/lnInclude \
     -I$(s4fPath)/src/blockCoupledSolids4FoamTools/lnInclude \
@@ -30,4 +37,5 @@ EXE_LIBS = \
     -lporoHydraulicModels \
     -lporoModels  \
     -lmeshTools \
-    -lsampling 
+    -lsampling \
+    $(GFORTRAN_LIBS)

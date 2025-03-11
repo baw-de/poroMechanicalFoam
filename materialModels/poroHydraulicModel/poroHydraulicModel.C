@@ -61,8 +61,8 @@ poroHydraulicModel::poroHydraulicModel
         )
     ),
     pField_(pField),
-    storageLawPtr_(max(pField.mesh().cellZones().size(),1)),
-    conductivityModelPtr_(max(pField.mesh().cellZones().size(),1)),
+    storageLawPtr_(pField.mesh().cellZones().size()),
+    conductivityModelPtr_(pField.mesh().cellZones().size()),
     rho_
     (
         poroHydraulicProperties_.lookupOrAddDefault<dimensionedScalar>
@@ -122,7 +122,7 @@ poroHydraulicModel::poroHydraulicModel
     Info << "Creating the poroHydraulicModel" << nl
          << "Gravity direction: " << vector(gamma_.value()).normalise() << nl
          << "Water specific weight: " << magGamma() << nl
-	     << "Referential Watertable is at z = " << href_ << endl;
+	 << "Referential Watertable is at z = " << href_ << endl;
 
     forAll(pField.mesh().cellZones(),zoneI)
     {
@@ -214,9 +214,15 @@ tmp<volScalarField> poroHydraulicModel::n0() const
         );
 
         volScalarField& n = tn0.ref();
-
+        
         const cellZoneMesh& cellZones = mesh().cellZones();
         PtrList<dimensionedScalar> nList(cellZones.size());  
+
+	if(cellZones.size()==0)
+	{
+		FatalError << "No cellZones detected, please add a cellZone to your case!"
+			   << endl;
+	}
 
         forAll(cellZones,iZone)
         {
