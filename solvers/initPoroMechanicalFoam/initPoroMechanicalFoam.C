@@ -23,13 +23,13 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Application
-    solids4Foam
+    initPoroMechanicalFoam
 
 Description
     Initialization of stress field, that includes the pore water.
-    Flow solver will be initalized to get all saturation.
+    Flow solver will be initialized to get all saturation.
 
-    Then the solid solver will calculate a consolidation under total soil weight. 
+    Then the solid solver will calculate a consolidation under total soil weight.
 
 Author
     Denis Maier, BAW.  All rights reserved.
@@ -38,7 +38,6 @@ Author
 
 #include "fvCFD.H"
 #include "poroFluidModel.H"
-#include "varSatPoroHydraulicModel.H"
 #include "solidModel.H"
 #include "meshToMesh.H"
 
@@ -55,93 +54,127 @@ int main(int argc, char *argv[])
 #   include "setRootCase.H"
 #   include "createTime.H"
 
-    // Create the general physics class
-    autoPtr<poroFluidModel> fluid = poroFluidModel::New(runTime,"poroFluid",false);
-    
-    autoPtr<solidModel> solid = solidModel::New(runTime,"solid");
+    // Create the general physics classes
+    autoPtr<poroFluidModel> fluid = poroFluidModel::New(runTime, "poroFluid", false);
+    autoPtr<solidModel> solid = solidModel::New(runTime, "solid");
 
-        #include "createMeshToMeshInterpolation.H"
+#   include "createMeshToMeshInterpolation.H"
 
-        const varSatPoroHydraulicModel& poroHydraulic = fluid().lookupObject<varSatPoroHydraulicModel>("poroHydraulicProperties");
+    // Get reference to poroPhydraulic model
+    const Foam::poroHydraulicModel& poroHydraulic =
+        fluid().mesh().lookupObject<poroHydraulicModel>("poroHydraulicModel");
 
-        fluid().p() = fluid().p_rgh() + poroHydraulic.p_Hyd();
-        forAll(fluid().p().boundaryField(), iPatch)
-        {
-            fluid().p().boundaryFieldRef()[iPatch] =
-                fluid().p_rgh().boundaryField()[iPatch] 
-                + poroHydraulic.p_Hyd().boundaryField()[iPatch];
-        }
-        poroHydraulic.S(fluid().p());   
+    // Initialize pressure
+    fluid().p() = fluid().p_rgh() + poroHydraulic.p_Hyd();
+    forAll(fluid().p().boundaryField(), iPatch)
+    {
+        fluid().p().boundaryFieldRef()[iPatch] =
+            fluid().p_rgh().boundaryField()[iPatch]
+            + poroHydraulic.p_Hyd().boundaryField()[iPatch];
+    }
 
-        volScalarField p
+    // Get saturation
+    tmp<volScalarField> saturationField;
+    if (fluid().mesh().objectRegistry::foundObject<volScalarField>("S"))
+    {
+        // If S exists, create a tmp from a reference
+        const volScalarField& existingS =
+            fluid().mesh().lookupObject<volScalarField>("S");
+        saturationField = tmp<volScalarField>(new volScalarField(existingS));
+    }
+    else
+    {
+        // Create a new field with default value of 1.0
+        saturationField = tmp<volScalarField>
         (
-            IOobject
+            new volScalarField
             (
-                "p",
-                runTime.timeName(),
-                solid().mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            solidToPoroFluid_().mapSrcToTgt(fluid().p())
+                IOobject
+                (
+                    "S",
+                    runTime.timeName(),
+                    fluid().mesh(),
+                    IOobject::NO_READ,
+                    IOobject::NO_WRITE
+                ),
+                fluid().mesh(),
+                dimensionedScalar("S", dimless, 1.0)
+            )
         );
-        volScalarField p_rgh
+    }
+
+    // Map fields from fluid mesh to solid mesh
+    volScalarField p
+    (
+        IOobject
         (
-            IOobject
-            (
-                "p",
-                runTime.timeName(),
-                solid().mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            solidToPoroFluid_().mapSrcToTgt(fluid().p_rgh())
-        );
+            "p",
+            runTime.timeName(),
+            solid().mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        solidToPoroFluid_().mapSrcToTgt(fluid().p())
+    );
 
-        volScalarField S
+    volScalarField p_rgh
+    (
+        IOobject
         (
-            IOobject
-            (
-                "S",
-                runTime.timeName(),
-                solid().mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            solidToPoroFluid_().mapSrcToTgt(poroHydraulic.S())
-        );
+            "p_rgh",
+            runTime.timeName(),
+            solid().mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        solidToPoroFluid_().mapSrcToTgt(fluid().p_rgh())
+    );
 
-        volScalarField n
+    volScalarField S
+    (
+        IOobject
         (
-            IOobject
-            (
-                "n",
-                runTime.timeName(),
-                solid().mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            solidToPoroFluid_().mapSrcToTgt(poroHydraulic.n())
-        );
+            "S",
+            runTime.timeName(),
+            solid().mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        solidToPoroFluid_().mapSrcToTgt(saturationField())
+    );
 
+    volScalarField n
+    (
+        IOobject
+        (
+            "n",
+            runTime.timeName(),
+            solid().mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        solidToPoroFluid_().mapSrcToTgt(poroHydraulic.n0())
+    );
 
-        solid.ref().recalculateRho();
+    // Recalculate density for the solid model
+    solid.ref().recalculateRho();
 
-        const solidModel& solidRef(solid());
-        volScalarField& rho = const_cast<volScalarField&>(solidRef.rho());
-        volScalarField rhoEnd = rho;
-        
+    const solidModel& solidRef(solid());
+    volScalarField& rho = const_cast<volScalarField&>(solidRef.rho());
+    volScalarField rhoEnd = rho;
+
     while(runTime.run())
     {
         runTime++;
 
-        rho = runTime.timeOutputValue()*rhoEnd;
-        Info << "current density: " << max(rho) << endl;
+        // Ramp up the density over time
+        rho = runTime.timeOutputValue() * rhoEnd;
+        Info << "Current density: " << max(rho) << endl;
 
         solid().evolve();
-
         solid().updateTotalFields();
 
+        // Write out fields
         solid().writeFields(runTime);
         solidRef.rho().write();
         runTime.writeNow();
@@ -154,6 +187,3 @@ int main(int argc, char *argv[])
 
     return(0);
 }
-
-
-// ************************************************************************* //
