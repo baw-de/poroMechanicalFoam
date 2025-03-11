@@ -60,9 +60,9 @@ int main(int argc, char *argv[])
 
 #   include "createMeshToMeshInterpolation.H"
 
-    // Get reference to poroPhydraulic model
+    // Get reference to porohydraulic model
     const Foam::poroHydraulicModel& poroHydraulic =
-        fluid().mesh().lookupObject<poroHydraulicModel>("poroHydraulicModel");
+        runTime.lookupObject<poroHydraulicModel>("poroHydraulicModel");
 
     // Initialize pressure
     fluid().p() = fluid().p_rgh() + poroHydraulic.p_Hyd();
