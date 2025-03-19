@@ -37,13 +37,13 @@ namespace Foam
 
 void Foam::ohdeElastic::updateStiffness(const volSymmTensorField& sigma)
 {
-    
+
     scalar oneThird = 1./3.;
 
     Info << "Calculating current K, mu" << endl;
     K_ == K0_* pow(oneThird*tr(sigma)/p0_,n_);
     mu_ == mu0_* pow(oneThird*tr(sigma)/p0_,n_);
-        
+
     Info << "Current Kmax:" << Foam::max(K_) << nl
 	 << "Current Kmin:" << Foam::min(K_) << nl
 	 << "Current mu_max:" << Foam::max(mu_) << nl
@@ -162,7 +162,7 @@ Foam::ohdeElastic::ohdeElastic
     // Store old times
     epsilon().storeOldTime();
     epsilonf().storeOldTime();
-    
+
     // Read shear modulus
     mu0_ = dict.get<dimensionedScalar>("mu0");
 
@@ -247,11 +247,11 @@ void Foam::ohdeElastic::correct(volSymmTensorField& sigma)
 {
     // Update epsilon
     updateEpsilon();
-    
+
     // Calculate stress using epsilon
     correct(sigma, epsilon());
 
-    updateStiffness(sigma);
+    updateStiffness(sigma + sigma0());
 }
 
 
@@ -262,7 +262,7 @@ void Foam::ohdeElastic::correct
 )
 {
     // Hooke's law: partitioned deviatoric and dilation form
-    sigma = 2.0*mu_*dev(epsilon) + K_*tr(epsilon)*I + sigma0();
+    sigma = 2.0*mu_*dev(epsilon) + K_*tr(epsilon)*I ;
 }
 
 
